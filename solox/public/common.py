@@ -6,6 +6,7 @@ import shutil
 import time
 from flask import request
 from solox.public.adb import adb
+from logzero import logger
 
 
 class Devices:
@@ -37,6 +38,22 @@ class Devices:
                 deviceIds.append(id)
         return deviceIds
 
+    def remote_connect(self, device_ip):
+        """Get remote connected device ids"""
+        # adb tcp
+        # 先远程连接手机
+        # os.popen(f"{self.adb} tcpip 5555")
+        # ip = self.get_device_ip()
+        os.popen(f"{self.adb} connect " + device_ip + ":5555")
+        # Ids = list(os.popen(f"{self.adb} devices").readlines())
+        # deviceIds = []
+        # for i in range(1, len(Ids) - 1):
+        #     output = re.findall(r'^[\w\d.:-]+\t[\w]+$', Ids[i])[0]
+        #     id, state = str(output).split('\t')
+        #     if state == 'device':
+        #         deviceIds.append(id)
+        # return deviceIds
+
     def getDevicesName(self, deviceId):
         """Get the device name of the Android corresponding device ID"""
         devices_name = os.popen(f'{self.adb} -s {deviceId} shell getprop ro.product.model').readlines()
@@ -50,6 +67,16 @@ class Devices:
             devices_name = self.getDevicesName(id)
             Devices.append(f'{id}({devices_name})')
         return Devices
+
+    def get_device_ip(self):
+        """ 获取连接手机的ip地址"""
+        cmd = os.popen(f"{self.adb} shell ip addr show wlan0")
+        cmd_result = cmd.read()
+        cmd.close()
+        math_obj = re.search(r'inet\s(\d+\.\d+\.\d+\.\d+).*?wlan0', cmd_result)
+        if math_obj and math_obj.group(1):
+            return math_obj.group(1)
+        return None
 
     def getIdbyDevice(self, deviceinfo, platform):
         """Obtain the corresponding device id according to the Android device information"""

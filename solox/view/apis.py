@@ -8,7 +8,6 @@ from flask import Blueprint
 from solox.public.apm import CPU, MEM, Flow, FPS, Battery
 from solox.public.apm_pk import CPU_PK, MEM_PK, Flow_PK, FPS_PK
 from solox.public.common import Devices, file, Method
-
 d = Devices()
 api = Blueprint("api", __name__)
 
@@ -67,6 +66,29 @@ def deviceids():
             if len(deviceinfos) > 0:
                 pkgnames = d.getPkgnameByiOS(deviceinfos[0].split(':')[1])
                 result = {'status': 1, 'deviceids': deviceinfos, 'devices': deviceinfos, 'pkgnames': pkgnames}
+            else:
+                result = {'status': 0, 'msg': 'no devices'}
+        else:
+            result = {'status': 0, 'msg': f'no this platform = {platform}'}
+    except:
+        result = {'status': 0, 'msg': 'devices connect error!'}
+    return result
+
+@api.route('/device_remote/ids', methods=['post', 'get'])
+def deviceids_remote():
+    """get devices_remote info"""
+    platform = request.args.get('platform')
+    device_ip = request.args.get('device_ip')
+
+    try:
+        # IOS不支持
+        if platform == 'Android':
+            d.remote_connect(device_ip)
+            deviceids = d.getDeviceIds()
+            devices = d.getDevices()
+            if len(deviceids) > 0:
+                pkgnames = d.getPkgname(deviceids[0])
+                result = {'status': 1, 'deviceids': deviceids, 'devices': devices, 'pkgnames': pkgnames}
             else:
                 result = {'status': 0, 'msg': 'no devices'}
         else:
